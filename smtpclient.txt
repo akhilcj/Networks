@@ -1,0 +1,134 @@
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<netdb.h>
+#include<netinet/in.h>
+#include<sys/types.h>
+#include<unistd.h>
+
+#define BUF_SIZE 256
+
+int main(int argc,char* argv[])
+{
+	struct sockaddr_in server,client;
+	char str[50] = "hi";
+	char mail_f[50],mail_to[50],msg[20],c;
+	int t=0;
+	socklen_t l=sizeof(server);
+	if(argc!=3)
+	printf("Input format not correct");
+	
+	int sockfd= socket(AF_INET,SOCK_DGRAM,0);
+	if(sockfd == -1)
+	{
+		printf("Error in socket();");
+	}
+	server.sin_family= AF_INET;
+	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_port = htons( atoi(argv[2]));
+	printf("Sending hi to server ");
+	
+	sleep(10);
+	
+	if(sendto(sockfd,str,sizeof(str),0,(struct sockaddr*)&server,sizeof(server))<0)
+	printf("Error in sendto ");
+	
+	if(recvfrom(sockfd,str,sizeof(str),0,(struct sockaddr*) &server,&l)<0)
+	printf("error in recv");
+	
+	printf("\ngreeting msg is %s",str);
+	if(strncmp(str,"220",3))
+	printf("\ncan't establish \n code 220 expected");
+	
+	printf("\nSENDING HELLO");
+	strcpy(str,"HELO 127.0.0.1");
+	
+	if(sendto(sockfd,str,sizeof(str),0,(struct sockaddr*)&server,sizeof(server))<0)
+	printf("error in sendto");
+	
+	sleep(3);
+	printf("\nREceiving from server ");
+	if(recvfrom(sockfd,str,sizeof(str),0,(struct sockaddr*) &server,&l)<0)
+	printf("error in recv");
+	
+	if(strncmp(str,"250",3))
+	printf("\n OK not received from server");
+	printf("\nServer has send %s ",str);
+	
+	printf("\nERROR FROM address\n");
+	scanf("%s",mail_f);
+	strcpy(str,"MAIL FROM");
+	strcat(str,mail_f);
+	
+	if(sendto(sockfd,str,sizeof(str),0,(struct sockaddr*)&server,sizeof(server))<0)
+	printf("Error in sendto ");
+	
+	sleep(3);
+	if(recvfrom(sockfd,str,sizeof(str),0,(struct sockaddr*) &server,&l)<0)
+	printf("error in recv");
+	
+	if(strncmp(str,"250",3))
+	printf("\n OK not received from the server");
+	printf("%s",str);
+	
+	printf("\nEnter TO address: ");
+	scanf("%s",mail_to);
+	
+	strcpy(str,"RCPT_TO");
+	strcat(str,mail_to);
+	
+	if(sendto(sockfd,str,sizeof(str),0,(struct sockaddr*)&server,sizeof(server))<0)
+	printf("Error in sendto ");
+	
+	sleep(3);
+	if(recvfrom(sockfd,str,sizeof(str),0,(struct sockaddr*) &server,&l)<0)
+	printf("error in recv");
+	
+	if(strncmp(str,"250",3))
+	printf("\n OK not received from the server");
+	
+	printf("\n%s",str);
+	
+	printf("\nEnter the mail body");
+	while(1)
+	{
+		c=getchar();
+		if(c=='$')
+		{
+			msg[t]='\0';
+			break;
+		}
+		if(c==0)
+		{
+			continue;
+		}
+		
+		msg[t++] = c;
+	}
+		
+	if(sendto(sockfd,str,sizeof(str),0,(struct sockaddr*)&server,sizeof(server))<0)
+	printf("Error in sendto ");
+	
+	sleep(3);
+	
+	printf("Sending QUIT to server");
+	strcpy(str,"QUIT");
+		
+	if(sendto(sockfd,str,sizeof(str),0,(struct sockaddr*)&server,sizeof(server))<0)
+	printf("Error in sendto ");
+	
+	if(recvfrom(sockfd,str,sizeof(str),0,(struct sockaddr*) &server,&l)<0)
+	printf("error in recv");
+	
+	if(strncmp(str,"221",3))
+	printf("\nOK not received from the server");
+	printf("\nServer has send GOODBYE.......Closing connection\n");
+	close(sockfd);
+	return 0;
+}
+
+
+
+
+
